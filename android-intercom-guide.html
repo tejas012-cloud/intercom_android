@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Intercom — WebRTC Technical Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300&family=Geist+Mono:wght@400;600&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ec;
+  --surface: #ffffff;
+  --surface2: #eeeae2;
+  --border: #ddd8cc;
+  --ink: #1a1612;
+  --muted: #7a7168;
+  --accent: #c8440a;
+  --accent2: #1a6b4a;
+  --accent3: #2952a3;
+  --mono: 'Geist Mono', monospace;
+  --display: 'Fraunces', serif;
+  --body: 'Geist', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* HEADER */
+header {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 70px 0 60px;
+  position: relative;
+  overflow: hidden;
+}
+header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 40px;
+  background: var(--bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.header-inner { max-width: 980px; margin: 0 auto; padding: 0 48px; }
+.header-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-label::before {
+  content: '';
+  display: block;
+  width: 28px; height: 1px;
+  background: var(--accent);
+}
+h1 {
+  font-family: var(--display);
+  font-size: clamp(36px, 5.5vw, 62px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+h1 em { font-style: normal; color: var(--accent); }
+.header-meta {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+.meta-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(245,242,236,0.5);
+  border: 1px solid rgba(245,242,236,0.15);
+  padding: 5px 14px;
+  border-radius: 100px;
+}
+.meta-chip span { color: var(--bg); font-weight: 600; }
+
+/* LAYOUT */
+.container { max-width: 980px; margin: 0 auto; padding: 0 48px; }
+
+/* TOC */
+.toc {
+  margin: 56px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  border: 1px solid var(--border);
+  background: var(--border);
+}
+.toc-header {
+  grid-column: 1/-1;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 14px 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.toc-item {
+  background: var(--surface);
+  padding: 14px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.toc-item:hover { background: var(--surface2); }
+.toc-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  flex-shrink: 0;
+  min-width: 24px;
+}
+.toc-name { font-size: 13px; font-weight: 400; }
+
+/* SECTIONS */
+section { margin: 72px 0; }
+.sec-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+}
+.sec-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+h2 {
+  font-family: var(--display);
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+h3 {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 36px 0 12px;
+}
+h4 {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 24px 0 10px;
+}
+p { color: #4a4540; margin-bottom: 14px; }
+p strong { color: var(--ink); font-weight: 500; }
+
+/* ARCH FLOW */
+.flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 32px 0;
+  padding: 36px;
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.flow::before {
+  content: 'CALL FLOW';
+  position: absolute;
+  top: 16px; right: 20px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 0.15em;
+}
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  justify-content: center;
+}
+.flow-nodes {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.flow-node {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 14px 20px;
+  text-align: center;
+  min-width: 130px;
+}
+.flow-node.hi { border-color: var(--accent); background: rgba(200,68,10,0.1); }
+.flow-node.hi2 { border-color: var(--accent2); background: rgba(26,107,74,0.1); }
+.flow-node.hi3 { border-color: #4a7fd4; background: rgba(41,82,163,0.1); }
+.fn-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 4px;
+}
+.fn-name {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(245,242,236,0.9);
+}
+.fn-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 3px;
+  display: block;
+}
+.flow-node.hi .fn-name { color: var(--accent); }
+.flow-node.hi2 .fn-name { color: #5cb88a; }
+.flow-node.hi3 .fn-name { color: #7aa3e0; }
+.flow-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 3px;
+}
+.fa-line {
+  width: 1px; height: 28px;
+  background: linear-gradient(to bottom, rgba(200,68,10,0.6), rgba(200,68,10,0.15));
+}
+.fa-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
+}
+.flow-horiz {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.fh-line {
+  height: 1px; width: 100%;
+  background: rgba(200,68,10,0.3);
+}
+
+/* CODE */
+pre {
+  background: var(--ink);
+  color: #d4cfc8;
+  padding: 28px;
+  overflow-x: auto;
+  margin: 20px 0;
+  position: relative;
+  border-left: 3px solid var(--accent);
+}
+.lang-tag {
+  position: absolute;
+  top: 10px; right: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.85;
+}
+.cm { color: #6b6560; font-style: italic; }
+.kw { color: #d4a0ff; }
+.str { color: #98d88a; }
+.num { color: #f0a060; }
+.fn  { color: #80c8ff; }
+.an  { color: #ffd080; }
+.ty  { color: #80ffcc; }
+.ic  {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  color: var(--accent);
+  border-radius: 2px;
+}
+
+/* CARDS */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin: 24px 0;
+}
+.card {
+  background: var(--surface);
+  padding: 24px;
+}
+.card-num {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--border);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.card h4 {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+}
+.card p { font-size: 13px; margin: 0; color: var(--muted); }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; margin: 20px 0; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 12px 16px;
+  text-align: left;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: #4a4540;
+}
+tbody tr:nth-child(even) td { background: var(--surface2); }
+tbody td:first-child { font-family: var(--mono); font-size: 12px; color: var(--accent2); }
+
+/* STEPS */
+.steps { margin: 24px 0; }
+.step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 20px;
+  margin-bottom: 0;
+  position: relative;
+}
+.step + .step { margin-top: 0; }
+.step-left { display: flex; flex-direction: column; align-items: center; }
+.step-circle {
+  width: 40px; height: 40px;
+  background: var(--ink);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.step-line {
+  flex: 1;
+  width: 1px;
+  background: var(--border);
+  margin: 4px 0;
+  min-height: 20px;
+}
+.step:last-child .step-line { display: none; }
+.step-body { padding: 8px 0 28px; }
+.step-body h4 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 0 0 6px;
+}
+.step-body p { font-size: 14px; }
+
+/* CALLOUT */
+.callout {
+  padding: 20px 24px;
+  margin: 20px 0;
+  display: flex;
+  gap: 16px;
+}
+.callout.warn { background: #fff8f0; border-left: 3px solid var(--accent); }
+.callout.tip  { background: #f0faf5; border-left: 3px solid var(--accent2); }
+.callout.info { background: #f0f4ff; border-left: 3px solid var(--accent3); }
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.callout p { margin: 0; font-size: 14px; }
+
+/* BADGE ROW */
+.badge-row {
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0;
+}
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 100px;
+  border: 1px solid;
+}
+.badge.red   { border-color: var(--accent);  color: var(--accent);  background: rgba(200,68,10,0.06); }
+.badge.green { border-color: var(--accent2); color: var(--accent2); background: rgba(26,107,74,0.06); }
+.badge.blue  { border-color: var(--accent3); color: var(--accent3); background: rgba(41,82,163,0.06); }
+
+/* NUMBERING VIS */
+.num-vis {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 28px;
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.num-block h4 {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 14px;
+}
+.unit-list { display: flex; flex-direction: column; gap: 6px; }
+.unit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.unit-ext {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 36px;
+}
+.unit-bar {
+  flex: 1; height: 2px;
+  background: var(--border);
+  position: relative;
+}
+.unit-bar::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  background: var(--accent);
+}
+.unit-row:nth-child(1) .unit-bar::after { width: 90%; }
+.unit-row:nth-child(2) .unit-bar::after { width: 60%; }
+.unit-row:nth-child(3) .unit-bar::after { width: 75%; }
+.unit-row:nth-child(4) .unit-bar::after { width: 40%; }
+.unit-name { font-size: 12px; color: var(--muted); min-width: 100px; }
+
+/* FOOTER */
+footer {
+  margin-top: 80px;
+  background: var(--ink);
+  color: rgba(245,242,236,0.4);
+  padding: 36px 48px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media(max-width:640px) {
+  .container, .header-inner, footer { padding-left: 20px; padding-right: 20px; }
+  .toc { grid-template-columns: 1fr; }
+  .num-vis { grid-template-columns: 1fr; }
+  h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="header-label">Android · WebRTC · Firebase · P2P</div>
+    <h1>Building <em>Intercom</em><br>Android Guide</h1>
+    <p style="color:rgba(245,242,236,0.55); max-width:520px; font-size:16px; margin-top:12px;">
+      Complete technical architecture for a serverless Android intercom — P2P WebRTC audio/video with Firebase signaling, working across WiFi and 4G/5G networks.
+    </p>
+    <div class="header-meta">
+      <div class="meta-chip">Platform: <span>Android (Kotlin)</span></div>
+      <div class="meta-chip">Calling: <span>WebRTC</span></div>
+      <div class="meta-chip">Signaling: <span>Firebase Firestore</span></div>
+      <div class="meta-chip">NAT: <span>STUN / TURN</span></div>
+      <div class="meta-chip">Push: <span>FCM</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-header">// Table of Contents</div>
+    <a class="toc-item" href="#s1"><span class="toc-num">01</span><span class="toc-name">Architecture Overview</span></a>
+    <a class="toc-item" href="#s2"><span class="toc-num">02</span><span class="toc-name">Device & Unit Numbering</span></a>
+    <a class="toc-item" href="#s3"><span class="toc-num">03</span><span class="toc-name">Firebase Project Setup</span></a>
+    <a class="toc-item" href="#s4"><span class="toc-num">04</span><span class="toc-name">WebRTC Signaling Flow</span></a>
+    <a class="toc-item" href="#s5"><span class="toc-num">05</span><span class="toc-name">Android Project Setup</span></a>
+    <a class="toc-item" href="#s6"><span class="toc-num">06</span><span class="toc-name">WebRTC Implementation</span></a>
+    <a class="toc-item" href="#s7"><span class="toc-num">07</span><span class="toc-name">Firebase Signaling Code</span></a>
+    <a class="toc-item" href="#s8"><span class="toc-num">08</span><span class="toc-name">Incoming Call via FCM</span></a>
+    <a class="toc-item" href="#s9"><span class="toc-num">09</span><span class="toc-name">NAT Traversal (STUN/TURN)</span></a>
+    <a class="toc-item" href="#s10"><span class="toc-num">10</span><span class="toc-name">Door Intercom Flow</span></a>
+    <a class="toc-item" href="#s11"><span class="toc-num">11</span><span class="toc-name">Firestore Data Schema</span></a>
+    <a class="toc-item" href="#s12"><span class="toc-num">12</span><span class="toc-name">Security & Permissions</span></a>
+    <a class="toc-item" href="#s13"><span class="toc-num">13</span><span class="toc-name">Tech Stack & Checklist</span></a>
+  </nav>
+
+  <!-- S1: ARCHITECTURE -->
+  <section id="s1">
+    <div class="sec-header">
+      <div class="sec-num">01</div>
+      <h2>Architecture Overview</h2>
+    </div>
+    <p>There is <strong>no central server</strong> for media. Audio and video stream <strong>directly peer-to-peer</strong> between Android devices using WebRTC. Firebase acts only as a lightweight <strong>signaling channel</strong> — it helps two devices exchange connection info (SDP offers + ICE candidates), then steps out of the way.</p>
+    <p>For devices on different networks (WiFi vs 4G), a <strong>TURN relay server</strong> (open-source Coturn, or a cloud-hosted service like Metered.ca) relays media when a direct P2P path is impossible due to NAT.</p>
+
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-nodes">
+          <div class="flow-node hi">
+            <span class="fn-label">Caller</span>
+            <span class="fn-name">Unit 101</span>
+            <span class="fn-sub">Android · WiFi</span>
+          </div>
+          <div class="flow-node hi3">
+            <span class="fn-label">Callee</span>
+            <span class="fn-name">Unit 203</span>
+            <span class="fn-sub">Android · 4G</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <div class="fa-label">SDP Offer / ICE candidates</div>
+        <div class="fa-line"></div>
+        <div class="fa-label">via Firestore (signaling only)</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-node hi2">
+          <span class="fn-label">Signaling</span>
+          <span class="fn-name">Firebase Firestore</span>
+          <span class="fn-sub">No media passes through</span>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <div class="fa-label">If P2P fails → relay RTP</div>
+        <div class="fa-line"></div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-nodes">
+          <div class="flow-node">
+            <span class="fn-label">NAT helper</span>
+            <span class="fn-name">STUN Server</span>
+            <span class="fn-sub">Discovers public IP</span>
+          </div>
+          <div class="flow-node">
+            <span class="fn-label">Media relay</span>
+            <span class="fn-name">TURN Server</span>
+            <span class="fn-sub">Relays if P2P blocked</span>
+          </div>
+          <div class="flow-node">
+            <span class="fn-label">Wake device</span>
+            <span class="fn-name">FCM Push</span>
+            <span class="fn-sub">Incoming call alert</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-num">01</div>
+        <h4>Caller sends FCM push</h4>
+        <p>Wakes the recipient's Android device even if the app is killed/background.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">02</div>
+        <h4>Offer written to Firestore</h4>
+        <p>Caller writes SDP offer + ICE candidates to a shared Firestore call document.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">03</div>
+        <h4>Callee answers</h4>
+        <p>Callee reads offer, creates SDP answer, writes back ICE candidates. Both listen for updates.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">04</div>
+        <h4>P2P WebRTC connects</h4>
+        <p>ICE negotiation completes. Direct audio/video stream established. Firebase is no longer needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: NUMBERING -->
+  <section id="s2">
+    <div class="sec-header">
+      <div class="sec-num">02</div>
+      <h2>Device & Unit Numbering</h2>
+    </div>
+    <p>Keep the same <strong>Floor + Room</strong> numbering scheme. In the Android app, the device's unit number is set once during first-time setup and stored in Firebase as the device identity.</p>
+
+    <div class="num-vis">
+      <div class="num-block">
+        <h4>Residential Units</h4>
+        <div class="unit-list">
+          <div class="unit-row"><div class="unit-ext">101</div><div class="unit-bar"></div><div class="unit-name">Floor 1 · Unit 1</div></div>
+          <div class="unit-row"><div class="unit-ext">102</div><div class="unit-bar"></div><div class="unit-name">Floor 1 · Unit 2</div></div>
+          <div class="unit-row"><div class="unit-ext">201</div><div class="unit-bar"></div><div class="unit-name">Floor 2 · Unit 1</div></div>
+          <div class="unit-row"><div class="unit-ext">301</div><div class="unit-bar"></div><div class="unit-name">Floor 3 · Unit 1</div></div>
+        </div>
+      </div>
+      <div class="num-block">
+        <h4>Special Devices</h4>
+        <div class="table-wrap" style="margin:0">
+          <table style="font-size:12px">
+            <thead><tr><th>Extension</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td>X00</td><td>Floor N main door</td></tr>
+              <tr><td>000</td><td>Building entrance</td></tr>
+              <tr><td>999</td><td>Security / admin</td></tr>
+              <tr><td>X99</td><td>Floor N broadcast</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p>Each device registers in Firebase with its extension as a unique key. The <strong>FCM token</strong> is stored alongside it so any unit can push a call notification to any other unit by extension number.</p>
+  </section>
+
+  <!-- S3: FIREBASE SETUP -->
+  <section id="s3">
+    <div class="sec-header">
+      <div class="sec-num">03</div>
+      <h2>Firebase Project Setup</h2>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Create Firebase Project</h4>
+          <p>Go to <span class="ic">console.firebase.google.com</span> → New Project → name it <span class="ic">building-intercom</span>. Enable Google Analytics is optional.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Enable Firestore Database</h4>
+          <p>Firestore → Create database → Start in <strong>production mode</strong>. Choose a region closest to your building (e.g. <span class="ic">asia-south1</span> for India).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Enable Firebase Authentication</h4>
+          <p>Authentication → Sign-in method → Enable <strong>Phone number</strong> auth. Each resident logs in with their mobile number — ties identity to unit number.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Enable Cloud Messaging (FCM)</h4>
+          <p>Project Settings → Cloud Messaging → Note the <strong>Server Key</strong>. This is used to send push notifications to wake recipient devices when a call arrives.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">5</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Download google-services.json</h4>
+          <p>Project Settings → Your apps → Add Android app → package name <span class="ic">com.yourbuilding.intercom</span> → Download <span class="ic">google-services.json</span> → place in <span class="ic">app/</span> folder.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Firestore Security Rules</h3>
+    <pre><code><span class="cm">// firestore.rules</span>
+rules_version = <span class="str">'2'</span>;
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    <span class="cm">// Devices: readable by all auth users, writable only by owner</span>
+    match /devices/{extension} {
+      allow read: <span class="kw">if</span> request.auth != <span class="kw">null</span>;
+      allow write: <span class="kw">if</span> request.auth != <span class="kw">null</span>
+        && request.auth.token.extension == extension;
+    }
+
+    <span class="cm">// Calls: only caller and callee can read/write</span>
+    match /calls/{callId} {
+      allow read, write: <span class="kw">if</span> request.auth != <span class="kw">null</span>
+        && (resource.data.caller == request.auth.token.extension
+         || resource.data.callee == request.auth.token.extension);
+      allow create: <span class="kw">if</span> request.auth != <span class="kw">null</span>;
+    }
+  }
+}
+<span class="lang-tag">FIRESTORE RULES</span></code></pre>
+  </section>
+
+  <!-- S4: SIGNALING FLOW -->
+  <section id="s4">
+    <div class="sec-header">
+      <div class="sec-num">04</div>
+      <h2>WebRTC Signaling Flow</h2>
+    </div>
+    <p>WebRTC needs a <strong>signaling channel</strong> to exchange SDP and ICE before the P2P connection opens. Firebase Firestore is the signaling channel here — both sides listen to the same document in real time.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">A</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Caller: Create PeerConnection + SDP Offer</h4>
+          <p>Caller creates a <span class="ic">RTCPeerConnection</span> with ICE servers config, creates an SDP offer (<span class="ic">createOffer()</span>), sets it as local description, then writes it to Firestore at <span class="ic">calls/{callId}/offer</span>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">B</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Caller: Send FCM Push to Callee</h4>
+          <p>Simultaneously, caller triggers an FCM notification to the callee's device (using their stored FCM token from Firestore). This wakes the callee app even if it's killed.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">C</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Callee: Accept + Create SDP Answer</h4>
+          <p>Callee opens the call screen, reads the offer from Firestore, sets it as remote description, calls <span class="ic">createAnswer()</span>, sets it as local description, and writes the answer back to <span class="ic">calls/{callId}/answer</span>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">D</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>ICE Candidate Exchange</h4>
+          <p>Both sides collect ICE candidates (generated by WebRTC) and write them to Firestore subcollections: <span class="ic">calls/{callId}/callerCandidates</span> and <span class="ic">calleeCandidates</span>. Each side listens and adds the other's candidates to their PeerConnection.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">E</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>ICE Negotiation Completes → P2P Stream</h4>
+          <p>WebRTC selects the best ICE candidate pair. Direct P2P connection is established. Audio/video streams flow directly device-to-device. Firestore is no longer involved.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5: ANDROID SETUP -->
+  <section id="s5">
+    <div class="sec-header">
+      <div class="sec-num">05</div>
+      <h2>Android Project Setup</h2>
+    </div>
+
+    <h3>build.gradle (app level)</h3>
+    <pre><code><span class="an">android</span> {
+    compileSdk <span class="num">34</span>
+    defaultConfig {
+        applicationId <span class="str">"com.yourbuilding.intercom"</span>
+        minSdk <span class="num">24</span>
+        targetSdk <span class="num">34</span>
+    }
+}
+
+<span class="an">dependencies</span> {
+    <span class="cm">// WebRTC — Google's official Android library</span>
+    implementation <span class="str">"io.getstream:stream-webrtc-android:1.1.8"</span>
+
+    <span class="cm">// Firebase</span>
+    implementation platform(<span class="str">"com.google.firebase:firebase-bom:32.7.0"</span>)
+    implementation <span class="str">"com.google.firebase:firebase-firestore-ktx"</span>
+    implementation <span class="str">"com.google.firebase:firebase-auth-ktx"</span>
+    implementation <span class="str">"com.google.firebase:firebase-messaging-ktx"</span>
+    implementation <span class="str">"com.google.firebase:firebase-functions-ktx"</span>
+
+    <span class="cm">// Kotlin coroutines + lifecycle</span>
+    implementation <span class="str">"org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"</span>
+    implementation <span class="str">"androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"</span>
+
+    <span class="cm">// Hilt DI (optional but recommended)</span>
+    implementation <span class="str">"com.google.dagger:hilt-android:2.50"</span>
+    kapt <span class="str">"com.google.dagger:hilt-compiler:2.50"</span>
+}
+<span class="lang-tag">GRADLE</span></code></pre>
+
+    <h3>AndroidManifest.xml Permissions</h3>
+    <pre><code><span class="cm">&lt;!-- Audio + Video --&gt;</span>
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.RECORD_AUDIO"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.CAMERA"</span> /&gt;
+
+<span class="cm">&lt;!-- Network --&gt;</span>
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.INTERNET"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.ACCESS_NETWORK_STATE"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.ACCESS_WIFI_STATE"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.CHANGE_NETWORK_STATE"</span> /&gt;
+
+<span class="cm">&lt;!-- Keep alive for incoming calls --&gt;</span>
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.FOREGROUND_SERVICE"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.FOREGROUND_SERVICE_MICROPHONE"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.WAKE_LOCK"</span> /&gt;
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.VIBRATE"</span> /&gt;
+
+<span class="cm">&lt;!-- Show incoming call over lock screen --&gt;</span>
+&lt;<span class="ty">uses-permission</span> android:name=<span class="str">"android.permission.USE_FULL_SCREEN_INTENT"</span> /&gt;
+<span class="lang-tag">XML</span></code></pre>
+  </section>
+
+  <!-- S6: WEBRTC IMPLEMENTATION -->
+  <section id="s6">
+    <div class="sec-header">
+      <div class="sec-num">06</div>
+      <h2>WebRTC Implementation (Kotlin)</h2>
+    </div>
+
+    <h3>WebRtcManager.kt — Core P2P Engine</h3>
+    <pre><code><span class="kw">class</span> <span class="ty">WebRtcManager</span>(
+    <span class="kw">private val</span> context: <span class="ty">Context</span>,
+    <span class="kw">private val</span> iceServers: <span class="ty">List</span>&lt;<span class="ty">IceServer</span>&gt;
+) {
+    <span class="kw">private lateinit var</span> peerConnectionFactory: <span class="ty">PeerConnectionFactory</span>
+    <span class="kw">private var</span> peerConnection: <span class="ty">PeerConnection</span>? = <span class="kw">null</span>
+    <span class="kw">private var</span> localAudioTrack: <span class="ty">AudioTrack</span>? = <span class="kw">null</span>
+    <span class="kw">private var</span> localVideoTrack: <span class="ty">VideoTrack</span>? = <span class="kw">null</span>
+
+    <span class="kw">fun</span> <span class="fn">init</span>() {
+        <span class="cm">// Initialize WebRTC globally (once per app)</span>
+        <span class="ty">PeerConnectionFactory</span>.<span class="fn">initialize</span>(
+            <span class="ty">PeerConnectionFactory</span>.<span class="fn">InitializationOptions</span>
+                .<span class="fn">builder</span>(context)
+                .<span class="fn">createInitializationOptions</span>()
+        )
+        peerConnectionFactory = <span class="ty">PeerConnectionFactory</span>.<span class="fn">builder</span>()
+            .<span class="fn">setVideoEncoderFactory</span>(<span class="ty">DefaultVideoEncoderFactory</span>(...))
+            .<span class="fn">setVideoDecoderFactory</span>(<span class="ty">DefaultVideoDecoderFactory</span>(...))
+            .<span class="fn">createPeerConnectionFactory</span>()
+    }
+
+    <span class="kw">fun</span> <span class="fn">createPeerConnection</span>(observer: <span class="ty">PeerConnectionObserver</span>) {
+        <span class="kw">val</span> rtcConfig = <span class="ty">RTCConfiguration</span>(iceServers).apply {
+            sdpSemantics = <span class="ty">SdpSemantics</span>.UNIFIED_PLAN
+            continualGatheringPolicy =
+                <span class="ty">ContinualGatheringPolicy</span>.GATHER_CONTINUALLY
+        }
+        peerConnection = peerConnectionFactory
+            .<span class="fn">createPeerConnection</span>(rtcConfig, observer)
+    }
+
+    <span class="kw">fun</span> <span class="fn">addLocalAudioTrack</span>() {
+        <span class="kw">val</span> audioSource = peerConnectionFactory
+            .<span class="fn">createAudioSource</span>(<span class="ty">MediaConstraints</span>())
+        localAudioTrack = peerConnectionFactory
+            .<span class="fn">createAudioTrack</span>(<span class="str">"audio0"</span>, audioSource)
+        peerConnection?.<span class="fn">addTrack</span>(localAudioTrack!!)
+    }
+
+    <span class="kw">fun</span> <span class="fn">addLocalVideoTrack</span>(surfaceView: <span class="ty">SurfaceViewRenderer</span>) {
+        <span class="kw">val</span> videoCapturer = <span class="fn">createCameraCapturer</span>()
+        <span class="kw">val</span> videoSource = peerConnectionFactory
+            .<span class="fn">createVideoSource</span>(videoCapturer.isScreencast)
+        videoCapturer.<span class="fn">initialize</span>(
+            <span class="ty">SurfaceTextureHelper</span>.<span class="fn">create</span>(<span class="str">"CaptureThread"</span>, eglBase.eglBaseContext),
+            context, videoSource.capturerObserver
+        )
+        videoCapturer.<span class="fn">startCapture</span>(<span class="num">1280</span>, <span class="num">720</span>, <span class="num">30</span>)
+        localVideoTrack = peerConnectionFactory
+            .<span class="fn">createVideoTrack</span>(<span class="str">"video0"</span>, videoSource)
+        localVideoTrack!!.<span class="fn">addSink</span>(surfaceView)
+        peerConnection?.<span class="fn">addTrack</span>(localVideoTrack!!)
+    }
+
+    <span class="kw">suspend fun</span> <span class="fn">createOffer</span>(): <span class="ty">SessionDescription</span> {
+        <span class="kw">val</span> constraints = <span class="ty">MediaConstraints</span>().apply {
+            mandatory.add(<span class="ty">MediaConstraints</span>.<span class="ty">KeyValuePair</span>(<span class="str">"OfferToReceiveAudio"</span>, <span class="str">"true"</span>))
+            mandatory.add(<span class="ty">MediaConstraints</span>.<span class="ty">KeyValuePair</span>(<span class="str">"OfferToReceiveVideo"</span>, <span class="str">"true"</span>))
+        }
+        <span class="kw">return</span> suspendCoroutine { cont ->
+            peerConnection?.<span class="fn">createOffer</span>(<span class="kw">object</span> : <span class="ty">SdpObserver</span> {
+                <span class="kw">override fun</span> <span class="fn">onCreateSuccess</span>(sdp: <span class="ty">SessionDescription</span>) {
+                    peerConnection?.<span class="fn">setLocalDescription</span>(<span class="kw">object</span>: <span class="ty">SdpObserver</span> {
+                        <span class="kw">override fun</span> <span class="fn">onSetSuccess</span>() = cont.<span class="fn">resume</span>(sdp)
+                        <span class="kw">override fun</span> <span class="fn">onSetFailure</span>(e: <span class="ty">String</span>?) = cont.<span class="fn">resumeWithException</span>(<span class="ty">Exception</span>(e))
+                        <span class="kw">override fun</span> <span class="fn">onCreateSuccess</span>(p0: <span class="ty">SessionDescription</span>?) {}
+                        <span class="kw">override fun</span> <span class="fn">onCreateFailure</span>(p0: <span class="ty">String</span>?) {}
+                    }, sdp)
+                }
+                <span class="kw">override fun</span> <span class="fn">onCreateFailure</span>(e: <span class="ty">String</span>?) = cont.<span class="fn">resumeWithException</span>(<span class="ty">Exception</span>(e))
+                <span class="kw">override fun</span> <span class="fn">onSetSuccess</span>() {}
+                <span class="kw">override fun</span> <span class="fn">onSetFailure</span>(p0: <span class="ty">String</span>?) {}
+            }, constraints)
+        }
+    }
+
+    <span class="kw">fun</span> <span class="fn">addIceCandidate</span>(candidate: <span class="ty">IceCandidate</span>) {
+        peerConnection?.<span class="fn">addIceCandidate</span>(candidate)
+    }
+
+    <span class="kw">fun</span> <span class="fn">toggleMute</span>(mute: <span class="ty">Boolean</span>) {
+        localAudioTrack?.setEnabled(!mute)
+    }
+
+    <span class="kw">fun</span> <span class="fn">toggleVideo</span>(enabled: <span class="ty">Boolean</span>) {
+        localVideoTrack?.setEnabled(enabled)
+    }
+
+    <span class="kw">fun</span> <span class="fn">close</span>() {
+        peerConnection?.<span class="fn">close</span>()
+        peerConnection = <span class="kw">null</span>
+    }
+}
+<span class="lang-tag">KOTLIN</span></code></pre>
+  </section>
+
+  <!-- S7: SIGNALING CODE -->
+  <section id="s7">
+    <div class="sec-header">
+      <div class="sec-num">07</div>
+      <h2>Firebase Signaling Code</h2>
+    </div>
+
+    <h3>SignalingRepository.kt</h3>
+    <pre><code><span class="kw">class</span> <span class="ty">SignalingRepository</span>(
+    <span class="kw">private val</span> db: <span class="ty">FirebaseFirestore</span>
+) {
+    <span class="cm">// ── CALLER SIDE ──────────────────────────────────</span>
+
+    <span class="kw">suspend fun</span> <span class="fn">sendOffer</span>(
+        callId: <span class="ty">String</span>,
+        callerExt: <span class="ty">String</span>,
+        calleeExt: <span class="ty">String</span>,
+        sdp: <span class="ty">SessionDescription</span>
+    ) {
+        db.<span class="fn">collection</span>(<span class="str">"calls"</span>).<span class="fn">document</span>(callId).<span class="fn">set</span>(mapOf(
+            <span class="str">"caller"</span>  to callerExt,
+            <span class="str">"callee"</span>  to calleeExt,
+            <span class="str">"status"</span>  to <span class="str">"ringing"</span>,
+            <span class="str">"offer"</span>   to mapOf(<span class="str">"type"</span> to sdp.type.name, <span class="str">"sdp"</span> to sdp.description),
+            <span class="str">"created"</span> to <span class="ty">FieldValue</span>.<span class="fn">serverTimestamp</span>()
+        )).<span class="fn">await</span>()
+    }
+
+    <span class="kw">fun</span> <span class="fn">listenForAnswer</span>(callId: <span class="ty">String</span>, onAnswer: (<span class="ty">SessionDescription</span>) -> <span class="ty">Unit</span>) {
+        db.<span class="fn">collection</span>(<span class="str">"calls"</span>).<span class="fn">document</span>(callId)
+            .<span class="fn">addSnapshotListener</span> { snap, _ ->
+                <span class="kw">val</span> answer = snap?.<span class="fn">get</span>(<span class="str">"answer"</span>) <span class="kw">as</span>? <span class="ty">Map</span>&lt;*, *&gt; ?: <span class="kw">return</span>@addSnapshotListener
+                onAnswer(<span class="ty">SessionDescription</span>(
+                    <span class="ty">SessionDescription</span>.<span class="ty">Type</span>.<span class="fn">fromCanonicalForm</span>(answer[<span class="str">"type"</span>] <span class="kw">as</span> <span class="ty">String</span>),
+                    answer[<span class="str">"sdp"</span>] <span class="kw">as</span> <span class="ty">String</span>
+                ))
+            }
+    }
+
+    <span class="kw">fun</span> <span class="fn">sendCallerCandidate</span>(callId: <span class="ty">String</span>, candidate: <span class="ty">IceCandidate</span>) {
+        db.<span class="fn">collection</span>(<span class="str">"calls"</span>).<span class="fn">document</span>(callId)
+            .<span class="fn">collection</span>(<span class="str">"callerCandidates"</span>).<span class="fn">add</span>(mapOf(
+                <span class="str">"sdpMid"</span>        to candidate.sdpMid,
+                <span class="str">"sdpMLineIndex"</span> to candidate.sdpMLineIndex,
+                <span class="str">"candidate"</span>     to candidate.sdp
+            ))
+    }
+
+    <span class="cm">// ── CALLEE SIDE ──────────────────────────────────</span>
+
+    <span class="kw">suspend fun</span> <span class="fn">sendAnswer</span>(callId: <span class="ty">String</span>, sdp: <span class="ty">SessionDescription</span>) {
+        db.<span class="fn">collection</span>(<span class="str">"calls"</span>).<span class="fn">document</span>(callId).<span class="fn">update</span>(mapOf(
+            <span class="str">"answer"</span> to mapOf(<span class="str">"type"</span> to sdp.type.name, <span class="str">"sdp"</span> to sdp.description),
+            <span class="str">"status"</span> to <span class="str">"active"</span>
+        )).<span class="fn">await</span>()
+    }
+
+    <span class="kw">fun</span> <span class="fn">listenForCallerCandidates</span>(callId: <span class="ty">String</span>, onCandidate: (<span class="ty">IceCandidate</span>) -> <span class="ty">Unit</span>) {
+        db.<span class="fn">collection</span>(<span class="str">"calls"</span>).<span class="fn">document</span>(callId)
+            .<span class="fn">collection</span>(<span class="str">"callerCandidates"</span>)
+            .<span class="fn">addSnapshotListener</span> { snaps, _ ->
+                snaps?.<span class="fn">documentChanges</span>
+                    ?.<span class="fn">filter</span> { it.type == <span class="ty">DocumentChange</span>.<span class="ty">Type</span>.ADDED }
+                    ?.<span class="fn">forEach</span> { change ->
+                        <span class="kw">val</span> d = change.document
+                        onCandidate(<span class="ty">IceCandidate</span>(
+                            d.<span class="fn">getString</span>(<span class="str">"sdpMid"</span>)!!,
+                            d.<span class="fn">getLong</span>(<span class="str">"sdpMLineIndex"</span>)!!.<span class="fn">toInt</span>(),
+                            d.<span class="fn">getString</span>(<span class="str">"candidate"</span>)!!
+                        ))
+                    }
+            }
+    }
+
+    <span class="kw">suspend fun</span> <span class="fn">hangUp</span>(callId: <span class="ty">String</span>) {
+        db.<span class="fn">collection</span>(<span class="str">"calls"</span>).<span class="fn">document</span>(callId)
+            .<span class="fn">update</span>(<span class="str">"status"</span>, <span class="str">"ended"</span>).<span class="fn">await</span>()
+    }
+}
+<span class="lang-tag">KOTLIN</span></code></pre>
+  </section>
+
+  <!-- S8: FCM INCOMING CALL -->
+  <section id="s8">
+    <div class="sec-header">
+      <div class="sec-num">08</div>
+      <h2>Incoming Call via FCM Push</h2>
+    </div>
+    <p>The callee's app may be killed or in the background. FCM (Firebase Cloud Messaging) wakes the app and shows a full-screen incoming call notification — just like a phone call.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <p><strong>Key architecture point:</strong> The caller cannot directly send FCM — that requires a server key. Use a <strong>Firebase Cloud Function</strong> as a tiny serverless trigger. It's free for low volumes and keeps the server key off the device.</p>
+    </div>
+
+    <h3>Firebase Cloud Function (send-call-notification)</h3>
+    <pre><code><span class="cm">// functions/index.js</span>
+<span class="kw">const</span> functions = <span class="fn">require</span>(<span class="str">'firebase-functions'</span>);
+<span class="kw">const</span> admin    = <span class="fn">require</span>(<span class="str">'firebase-admin'</span>);
+admin.<span class="fn">initializeApp</span>();
+
+<span class="cm">// Triggered when a new call document is created</span>
+exports.onCallCreated = functions.firestore
+    .<span class="fn">document</span>(<span class="str">'calls/{callId}'</span>)
+    .<span class="fn">onCreate</span>(<span class="kw">async</span> (snap, context) => {
+        <span class="kw">const</span> call  = snap.data();
+        <span class="kw">const</span> callee = call.callee;    <span class="cm">// e.g. "203"</span>
+        <span class="kw">const</span> caller = call.caller;    <span class="cm">// e.g. "101"</span>
+
+        <span class="cm">// Get callee's FCM token from devices collection</span>
+        <span class="kw">const</span> deviceDoc = <span class="kw">await</span> admin.firestore()
+            .<span class="fn">collection</span>(<span class="str">'devices'</span>).<span class="fn">doc</span>(callee).<span class="fn">get</span>();
+        <span class="kw">const</span> fcmToken = deviceDoc.data()?.fcmToken;
+        <span class="kw">if</span> (!fcmToken) <span class="kw">return</span>;
+
+        <span class="kw">await</span> admin.<span class="fn">messaging</span>().<span class="fn">send</span>({
+            token: fcmToken,
+            data: {
+                type:    <span class="str">'INCOMING_CALL'</span>,
+                callId:  context.params.callId,
+                caller:  caller,
+                isVideo: <span class="str">'true'</span>,
+            },
+            android: {
+                priority: <span class="str">'high'</span>,
+                ttl: <span class="num">30000</span>,    <span class="cm">// 30s — drop if not delivered</span>
+            }
+        });
+    });
+<span class="lang-tag">JAVASCRIPT (CLOUD FUNCTION)</span></code></pre>
+
+    <h3>Android FCM Service</h3>
+    <pre><code><span class="kw">class</span> <span class="ty">IntercomMessagingService</span> : <span class="ty">FirebaseMessagingService</span>() {
+
+    <span class="kw">override fun</span> <span class="fn">onMessageReceived</span>(message: <span class="ty">RemoteMessage</span>) {
+        <span class="kw">val</span> data = message.data
+        <span class="kw">if</span> (data[<span class="str">"type"</span>] == <span class="str">"INCOMING_CALL"</span>) {
+            <span class="fn">showIncomingCallNotification</span>(
+                callId  = data[<span class="str">"callId"</span>]!!,
+                caller  = data[<span class="str">"caller"</span>]!!,
+                isVideo = data[<span class="str">"isVideo"</span>] == <span class="str">"true"</span>
+            )
+        }
+    }
+
+    <span class="kw">private fun</span> <span class="fn">showIncomingCallNotification</span>(callId: <span class="ty">String</span>, caller: <span class="ty">String</span>, isVideo: <span class="ty">Boolean</span>) {
+        <span class="kw">val</span> fullScreenIntent = <span class="ty">Intent</span>(this, <span class="ty">IncomingCallActivity</span>::<span class="kw">class</span>.java).apply {
+            putExtra(<span class="str">"callId"</span>, callId)
+            putExtra(<span class="str">"caller"</span>, caller)
+            putExtra(<span class="str">"isVideo"</span>, isVideo)
+            flags = <span class="ty">Intent</span>.FLAG_ACTIVITY_NEW_TASK
+        }
+        <span class="kw">val</span> pendingIntent = <span class="ty">PendingIntent</span>.<span class="fn">getActivity</span>(
+            this, <span class="num">0</span>, fullScreenIntent,
+            <span class="ty">PendingIntent</span>.FLAG_UPDATE_CURRENT <span class="kw">or</span> <span class="ty">PendingIntent</span>.FLAG_IMMUTABLE
+        )
+        <span class="kw">val</span> notification = <span class="ty">NotificationCompat</span>.<span class="ty">Builder</span>(this, <span class="str">"incoming_calls"</span>)
+            .<span class="fn">setSmallIcon</span>(<span class="ty">R</span>.drawable.ic_call)
+            .<span class="fn">setContentTitle</span>(<span class="str">"Intercom — Unit $caller"</span>)
+            .<span class="fn">setContentText</span>(<span class="kw">if</span> (isVideo) <span class="str">"Video call incoming"</span> <span class="kw">else</span> <span class="str">"Audio call incoming"</span>)
+            .<span class="fn">setPriority</span>(<span class="ty">NotificationCompat</span>.PRIORITY_MAX)
+            .<span class="fn">setCategory</span>(<span class="ty">NotificationCompat</span>.CATEGORY_CALL)
+            .<span class="fn">setFullScreenIntent</span>(pendingIntent, <span class="kw">true</span>)   <span class="cm">// Shows over lock screen</span>
+            .<span class="fn">setAutoCancel</span>(<span class="kw">true</span>)
+            .<span class="fn">build</span>()
+        <span class="ty">NotificationManagerCompat</span>.<span class="fn">from</span>(this).<span class="fn">notify</span>(<span class="num">1001</span>, notification)
+    }
+
+    <span class="kw">override fun</span> <span class="fn">onNewToken</span>(token: <span class="ty">String</span>) {
+        <span class="cm">// Update FCM token in Firestore whenever it refreshes</span>
+        <span class="kw">val</span> ext = <span class="ty">PrefsHelper</span>.<span class="fn">getExtension</span>(this)
+        <span class="ty">FirebaseFirestore</span>.<span class="fn">getInstance</span>()
+            .<span class="fn">collection</span>(<span class="str">"devices"</span>).<span class="fn">document</span>(ext)
+            .<span class="fn">update</span>(<span class="str">"fcmToken"</span>, token)
+    }
+}
+<span class="lang-tag">KOTLIN</span></code></pre>
+  </section>
+
+  <!-- S9: STUN TURN -->
+  <section id="s9">
+    <div class="sec-header">
+      <div class="sec-num">09</div>
+      <h2>NAT Traversal — STUN & TURN</h2>
+    </div>
+    <p>Devices on WiFi vs 4G are behind different NATs and cannot reach each other directly. STUN helps discover public IPs. TURN relays media when all direct paths fail.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <p><strong>For a housing building:</strong> Use a <strong>free STUN server</strong> (Google's <span class="ic">stun.l.google.com:19302</span>) plus a <strong>low-cost TURN service</strong> like <span class="ic">metered.ca</span> or <span class="ic">xirsys.com</span> — typically $0–5/month for a small building. No server to manage.</p>
+    </div>
+
+    <h3>ICE Servers Configuration in Kotlin</h3>
+    <pre><code><span class="kw">object</span> <span class="ty">IceConfig</span> {
+    <span class="kw">fun</span> <span class="fn">getIceServers</span>(): <span class="ty">List</span>&lt;<span class="ty">PeerConnection</span>.<span class="ty">IceServer</span>&gt; = listOf(
+
+        <span class="cm">// Free Google STUN — discovers public IP/port</span>
+        <span class="ty">PeerConnection</span>.<span class="ty">IceServer</span>
+            .<span class="fn">builder</span>(<span class="str">"stun:stun.l.google.com:19302"</span>)
+            .<span class="fn">createIceServer</span>(),
+
+        <span class="ty">PeerConnection</span>.<span class="ty">IceServer</span>
+            .<span class="fn">builder</span>(<span class="str">"stun:stun1.l.google.com:19302"</span>)
+            .<span class="fn">createIceServer</span>(),
+
+        <span class="cm">// TURN relay — fallback when P2P fails (WiFi ↔ 4G)</span>
+        <span class="cm">// Option A: Self-hosted Coturn on a ₹500/mo VPS</span>
+        <span class="ty">PeerConnection</span>.<span class="ty">IceServer</span>
+            .<span class="fn">builder</span>(<span class="str">"turn:your-turn-server.com:3478"</span>)
+            .<span class="fn">setUsername</span>(<span class="str">"intercom"</span>)
+            .<span class="fn">setPassword</span>(<span class="str">"yourpassword"</span>)
+            .<span class="fn">createIceServer</span>(),
+
+        <span class="cm">// Option B: Metered.ca managed TURN (free tier available)</span>
+        <span class="ty">PeerConnection</span>.<span class="ty">IceServer</span>
+            .<span class="fn">builder</span>(<span class="str">"turn:relay.metered.ca:80"</span>)
+            .<span class="fn">setUsername</span>(<span class="str">"metered_username"</span>)
+            .<span class="fn">setPassword</span>(<span class="str">"metered_credential"</span>)
+            .<span class="fn">createIceServer</span>()
+    )
+}
+<span class="lang-tag">KOTLIN</span></code></pre>
+
+    <h3>When is TURN needed?</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Scenario</th><th>STUN enough?</th><th>TURN needed?</th></tr></thead>
+        <tbody>
+          <tr><td>Both on same WiFi LAN</td><td>✅ Yes — local IP works</td><td>No</td></tr>
+          <tr><td>Same building, different subnets</td><td>Usually yes</td><td>Rarely</td></tr>
+          <tr><td>One WiFi, one 4G</td><td>Often yes</td><td>~20% of time</td></tr>
+          <tr><td>Both on 4G (symmetric NAT)</td><td>❌ No</td><td>✅ Always</td></tr>
+          <tr><td>Corporate/restricted WiFi</td><td>❌ No</td><td>✅ Always</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- S10: DOOR INTERCOM -->
+  <section id="s10">
+    <div class="sec-header">
+      <div class="sec-num">10</div>
+      <h2>Door Intercom Flow</h2>
+    </div>
+    <p>The door device (extension <strong>000</strong> or <strong>X00</strong>) is an Android tablet or dedicated device mounted at the entrance. When a visitor presses the call button, it triggers a video call to a specific unit or the security console (999).</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Visitor presses call button on door device</h4>
+          <p>The door Android app shows a numeric pad or a pre-programmed "call unit" button. Visitor selects unit 203 or presses the main call button.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Door device initiates WebRTC video call</h4>
+          <p>Same flow as a regular call. Door device (ext <span class="ic">000</span>) writes SDP offer to Firestore, Cloud Function sends FCM to unit 203's Android device.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Resident receives full-screen video call</h4>
+          <p>Resident sees live video from door camera on their phone. Can see and speak to visitor via two-way audio/video WebRTC stream.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div><div class="step-line"></div></div>
+        <div class="step-body">
+          <h4>Resident taps "Unlock Door"</h4>
+          <p>App writes a door unlock command to Firestore: <span class="ic">doorCommands/{doorId}</span> with a short TTL. The door device listens to this document and triggers the relay/lock GPIO or a smart lock API.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Door Unlock via Firestore</h3>
+    <pre><code><span class="cm">// Resident's app — tap unlock button</span>
+<span class="kw">fun</span> <span class="fn">unlockDoor</span>(doorExtension: <span class="ty">String</span>) {
+    db.<span class="fn">collection</span>(<span class="str">"doorCommands"</span>).<span class="fn">document</span>(doorExtension).<span class="fn">set</span>(mapOf(
+        <span class="str">"command"</span>    to <span class="str">"UNLOCK"</span>,
+        <span class="str">"issuedBy"</span>   to currentUserExtension,
+        <span class="str">"expiresAt"</span>  to <span class="ty">System</span>.<span class="fn">currentTimeMillis</span>() + <span class="num">5000</span>,  <span class="cm">// 5s TTL</span>
+        <span class="str">"timestamp"</span>  to <span class="ty">FieldValue</span>.<span class="fn">serverTimestamp</span>()
+    ))
+}
+
+<span class="cm">// Door device — listening for unlock commands</span>
+db.<span class="fn">collection</span>(<span class="str">"doorCommands"</span>).<span class="fn">document</span>(myExtension)
+    .<span class="fn">addSnapshotListener</span> { snap, _ ->
+        <span class="kw">val</span> command   = snap?.<span class="fn">getString</span>(<span class="str">"command"</span>)
+        <span class="kw">val</span> expiresAt = snap?.<span class="fn">getLong</span>(<span class="str">"expiresAt"</span>) ?: <span class="num">0</span>
+        <span class="kw">if</span> (command == <span class="str">"UNLOCK"</span> && <span class="ty">System</span>.<span class="fn">currentTimeMillis</span>() &lt; expiresAt) {
+            <span class="fn">triggerDoorRelay</span>()   <span class="cm">// GPIO or smart lock SDK call</span>
+        }
+    }
+<span class="lang-tag">KOTLIN</span></code></pre>
+  </section>
+
+  <!-- S11: SCHEMA -->
+  <section id="s11">
+    <div class="sec-header">
+      <div class="sec-num">11</div>
+      <h2>Firestore Data Schema</h2>
+    </div>
+    <pre><code><span class="cm">// Collection: devices</span>
+devices / {extension}  <span class="cm">// e.g. "101", "203", "000"</span>
+  extension:    <span class="str">"101"</span>
+  floor:        <span class="num">1</span>
+  roomName:     <span class="str">"Unit 1"</span>
+  deviceType:   <span class="str">"resident"</span>  <span class="cm">// or "door", "security"</span>
+  fcmToken:     <span class="str">"eKx9..."</span>   <span class="cm">// updated on login / token refresh</span>
+  isOnline:     <span class="kw">true</span>
+  lastSeen:     Timestamp
+
+<span class="cm">// Collection: calls</span>
+calls / {callId}
+  caller:       <span class="str">"101"</span>
+  callee:       <span class="str">"203"</span>
+  status:       <span class="str">"ringing"</span>  <span class="cm">// → "active" → "ended"</span>
+  isVideo:      <span class="kw">true</span>
+  offer:        { type: <span class="str">"offer"</span>, sdp: <span class="str">"v=0\r\n..."</span> }
+  answer:       { type: <span class="str">"answer"</span>, sdp: <span class="str">"v=0\r\n..."</span> }
+  created:      Timestamp
+  ended:        Timestamp
+
+  <span class="cm">// Subcollections</span>
+  callerCandidates / {id}
+    candidate:      <span class="str">"candidate:..."</span>
+    sdpMid:         <span class="str">"0"</span>
+    sdpMLineIndex:  <span class="num">0</span>
+
+  calleeCandidates / {id}
+    candidate:      <span class="str">"candidate:..."</span>
+    sdpMid:         <span class="str">"0"</span>
+    sdpMLineIndex:  <span class="num">0</span>
+
+<span class="cm">// Collection: doorCommands</span>
+doorCommands / {doorExtension}
+  command:    <span class="str">"UNLOCK"</span>
+  issuedBy:   <span class="str">"203"</span>
+  expiresAt:  <span class="num">1735000000000</span>  <span class="cm">// epoch ms, 5s TTL</span>
+  timestamp:  Timestamp
+
+<span class="cm">// Collection: callLogs (written by Cloud Function on call end)</span>
+callLogs / {callId}
+  from:       <span class="str">"101"</span>
+  to:         <span class="str">"203"</span>
+  duration:   <span class="num">47</span>  <span class="cm">// seconds</span>
+  type:       <span class="str">"video"</span>
+  status:     <span class="str">"answered"</span>  <span class="cm">// or "missed"</span>
+  timestamp:  Timestamp
+<span class="lang-tag">FIRESTORE SCHEMA</span></code></pre>
+  </section>
+
+  <!-- S12: SECURITY -->
+  <section id="s12">
+    <div class="sec-header">
+      <div class="sec-num">12</div>
+      <h2>Security & Permissions</h2>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-num">🔑</div>
+        <h4>Firebase Phone Auth</h4>
+        <p>Each resident logs in with their phone number. Firebase Auth generates a UID. Admin links UID to extension number on first setup.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">🛡️</div>
+        <h4>Firestore Rules</h4>
+        <p>Calls collection only readable by caller and callee. Devices writeable only by their owner. Prevents snooping on neighbours.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">🔒</div>
+        <h4>DTLS-SRTP Encryption</h4>
+        <p>WebRTC always encrypts media with DTLS-SRTP by specification. All audio/video is end-to-end encrypted — no one can intercept the stream.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">⏱️</div>
+        <h4>Call TTL Cleanup</h4>
+        <p>Cloud Function deletes call documents after 24h. Door unlock commands have 5-second TTL. Prevents stale data buildup.</p>
+      </div>
+    </div>
+
+    <h3>Android Runtime Permission Request</h3>
+    <pre><code><span class="kw">private val</span> requiredPermissions = arrayOf(
+    <span class="ty">Manifest</span>.permission.RECORD_AUDIO,
+    <span class="ty">Manifest</span>.permission.CAMERA
+)
+
+<span class="kw">private val</span> permissionLauncher =
+    <span class="fn">registerForActivityResult</span>(<span class="ty">ActivityResultContracts</span>.<span class="ty">RequestMultiplePermissions</span>()) { results ->
+        <span class="kw">val</span> allGranted = results.values.<span class="fn">all</span> { it }
+        <span class="kw">if</span> (allGranted) {
+            <span class="fn">startCall</span>()
+        } <span class="kw">else</span> {
+            <span class="fn">showPermissionRationale</span>()
+        }
+    }
+
+<span class="kw">fun</span> <span class="fn">checkAndRequestPermissions</span>() {
+    <span class="kw">val</span> missing = requiredPermissions.<span class="fn">filter</span> {
+        <span class="fn">checkSelfPermission</span>(it) != <span class="ty">PackageManager</span>.PERMISSION_GRANTED
+    }
+    <span class="kw">if</span> (missing.<span class="fn">isEmpty</span>()) <span class="fn">startCall</span>()
+    <span class="kw">else</span> permissionLauncher.<span class="fn">launch</span>(missing.<span class="fn">toTypedArray</span>())
+}
+<span class="lang-tag">KOTLIN</span></code></pre>
+  </section>
+
+  <!-- S13: STACK + CHECKLIST -->
+  <section id="s13">
+    <div class="sec-header">
+      <div class="sec-num">13</div>
+      <h2>Tech Stack & Deployment Checklist</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Technology</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>P2P Audio/Video</td><td>WebRTC (stream-webrtc-android)</td><td>Free</td></tr>
+          <tr><td>Signaling</td><td>Firebase Firestore</td><td>Free tier (50k reads/day)</td></tr>
+          <tr><td>Push Notifications</td><td>Firebase Cloud Messaging (FCM)</td><td>Free</td></tr>
+          <tr><td>Auth</td><td>Firebase Phone Auth</td><td>Free (10k/month)</td></tr>
+          <tr><td>STUN</td><td>Google STUN stun.l.google.com</td><td>Free</td></tr>
+          <tr><td>TURN Relay</td><td>Metered.ca or Coturn on VPS</td><td>$0–10/month</td></tr>
+          <tr><td>Serverless Trigger</td><td>Firebase Cloud Functions</td><td>Free (125k/month)</td></tr>
+          <tr><td>App Language</td><td>Kotlin + Jetpack Compose</td><td>Free</td></tr>
+          <tr><td>Door Lock Control</td><td>Firestore + GPIO/Smart Lock SDK</td><td>Varies</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="badge-row">
+      <div class="badge green">✓ No dedicated server required</div>
+      <div class="badge green">✓ Works on WiFi + 4G/5G</div>
+      <div class="badge green">✓ End-to-end encrypted (DTLS-SRTP)</div>
+      <div class="badge blue">ℹ Works across any network in building</div>
+      <div class="badge red">⚠ TURN required for symmetric NAT (4G↔4G)</div>
+    </div>
+
+    <h3>Go-Live Checklist</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Firebase project created, Firestore + FCM + Auth enabled</h4><p>Download <span class="ic">google-services.json</span> and add to Android project.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Deploy Cloud Functions</h4><p>Run <span class="ic">firebase deploy --only functions</span>. Test FCM delivery to a test device.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Configure STUN/TURN credentials in app</h4><p>Add ICE server list to <span class="ic">IceConfig.kt</span>. Test TURN connectivity using WebRTC test tool.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Install & register all devices</h4><p>Each unit signs in with their phone number, selects their extension (101, 102…). Extension is saved in Firestore with FCM token.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">5</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Test cross-network calls</h4><p>Call from WiFi device to 4G device. Verify audio + video both ways. Check ICE connection state reaches "connected".</p></div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">6</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Install door device (000)</h4><p>Mount Android tablet at entrance. Test door call → resident receives video call → unlock command triggers door relay.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">7</div><div class="step-line"></div></div>
+        <div class="step-body"><h4>Set Firestore security rules + test</h4><p>Run Firebase emulator suite to verify rules. Confirm no unit can read another unit's calls.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <span>ANDROID INTERCOM SYSTEM — WEBRTC + FIREBASE TECHNICAL GUIDE</span>
+  <span>P2P · NO CENTRAL SERVER · WIFI + 4G/5G</span>
+</footer>
+
+</body>
+</html>
